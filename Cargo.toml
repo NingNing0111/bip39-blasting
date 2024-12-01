@@ -4,30 +4,14 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-alloy = { version = "0.7.0", features = [
-    "full",
-    "eips",
-    "hyper",
-    "json-rpc",
-    "node-bindings",
-    "rpc-client",
-    "rpc-types-debug",
-    "rpc-types-trace",
-    "signer-aws",
-    "signer-keystore",
-    "signer-ledger",
-    "signer-mnemonic",
-    "signer-trezor",
-    "signer-yubihsm",
-] }
+tokio = { version = "1.41.1", features = ["full"] }
+alloy = { version = "0.7.0", features = ["full", "signer-mnemonic"] }
 chrono = "0.4.38"
-dotenv = "0.15.0"
 envy = "0.4.2"
-eyre = "0.6.12"
 fern = "0.7.0"
+dotenv = "0.15.0"
+eyre = "0.6.12"
 futures = "0.3.31"
 itertools = "0.13.0"
 log = "0.4.22"
 rand = "0.8.5"
-tempfile = "3.14.0"
-tokio = { version = "1.41.1", features = ["full"] }
