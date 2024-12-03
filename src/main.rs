@@ -57,7 +57,7 @@ async fn process_combination(combination: Vec<String>, url: &str) {
             // 生成一个 0 到 5 秒之间的随机延迟
             let mut rng = rand::thread_rng();
             // 0到5秒之间，步长为0.1
-            let random_value = rng.gen_range(0..=50) as f64 * 0.1;
+            let random_value = rng.gen_range(0..=10) as f64 * 0.1;
             // 将秒转换为毫秒
             let delay_duration = (random_value * 1000.0) as u64;
             sleep(Duration::from_millis(delay_duration)).await;
