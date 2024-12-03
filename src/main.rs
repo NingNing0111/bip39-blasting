@@ -1,3 +1,12 @@
+mod log;
+mod mnemonic;
+mod net_url;
+mod write;
+
+use crate::log::init_log;
+use crate::mnemonic::mnemonic_init;
+use crate::net_url::get_random_net_url;
+use crate::write::{write_moneny_wallet, write_wallet};
 use ::log::{error, info};
 use alloy::primitives::utils::format_units;
 use alloy::providers::{Provider, ProviderBuilder};
@@ -6,23 +15,18 @@ use dotenv::dotenv;
 use eyre::Result;
 use futures::stream::{self, StreamExt};
 use itertools::Itertools;
-use log::init_log;
-use mnemonic::mnemonic_init;
+use rand::{self, Rng};
 use std::env;
 use std::error::Error;
-use std::thread::sleep;
 use std::time::Duration;
 use tokio::sync::Semaphore;
-use write::{write_moneny_wallet, write_wallet};
-mod log;
-mod mnemonic;
-mod write;
+use tokio::time::sleep;
 
 // 助记词处理
-async fn process_combination(combination: Vec<String>, net_url: &str) {
+async fn process_combination(combination: Vec<String>, url: &str) {
     let combined = combination.join(" ");
 
-    let rpc_url = net_url.parse().unwrap();
+    let rpc_url = url.parse().unwrap();
 
     let provider = ProviderBuilder::new().on_http(rpc_url);
     let index = 0u32;
@@ -50,7 +54,13 @@ async fn process_combination(combination: Vec<String>, net_url: &str) {
     let balance = match provider.get_balance(wallet.address()).await {
         Ok(b) => b,
         Err(_) => {
-            sleep(Duration::from_millis(1500)); // 延迟重试
+            // 生成一个 0 到 5 秒之间的随机延迟
+            let mut rng = rand::thread_rng();
+            // 0到5秒之间，步长为0.1
+            let random_value = rng.gen_range(0..=50) as f64 * 0.1;
+            // 将秒转换为毫秒
+            let delay_duration = (random_value * 1000.0) as u64;
+            sleep(Duration::from_millis(delay_duration)).await;
             match provider.get_balance(wallet.address()).await {
                 Ok(b) => b,
                 Err(e) => {
@@ -95,7 +105,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     dotenv().ok();
     let _ = init_log().expect("log config error...");
 
-    let net_url = env::var("NET_URL").expect("NET_URL must be set");
     // MAX_CONCURRENT
     let max_concurrent: usize = env::var("MAX_CONCURRENT")
         .ok()
@@ -114,7 +123,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     stream::iter(combinations)
         .for_each_concurrent(max_concurrent, |combination| async {
             let _permit = semaphore.acquire().await.unwrap();
-            process_combination(combination, &net_url).await;
+            let url = get_random_net_url();
+            process_combination(combination, url.as_str()).await;
         })
         .await;
     Ok(())
