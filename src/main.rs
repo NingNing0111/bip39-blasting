@@ -1,14 +1,17 @@
+mod contract;
 mod log;
 mod mnemonic;
 mod net_url;
 mod write;
 
+use crate::contract::get_balance_ustd;
 use crate::log::init_log;
 use crate::mnemonic::mnemonic_init;
 use crate::net_url::get_random_net_url;
 use crate::write::{write_moneny_wallet, write_wallet};
 use ::log::{error, info};
 use alloy::primitives::utils::format_units;
+use alloy::primitives::Uint;
 use alloy::providers::{Provider, ProviderBuilder};
 use alloy::signers::local::{coins_bip39::English, MnemonicBuilder};
 use dotenv::dotenv;
@@ -51,13 +54,13 @@ async fn process_combination(combination: Vec<String>, url: &str) {
         }
     };
 
-    let balance = match provider.get_balance(wallet.address()).await {
+    let eth = match provider.get_balance(wallet.address()).await {
         Ok(b) => b,
         Err(_) => {
             // 生成一个 0 到 5 秒之间的随机延迟
             let mut rng = rand::thread_rng();
             // 0到5秒之间，步长为0.1
-            let random_value = rng.gen_range(0..=10) as f64 * 0.1;
+            let random_value = rng.gen_range(0..=50) as f64 * 0.1;
             // 将秒转换为毫秒
             let delay_duration = (random_value * 1000.0) as u64;
             sleep(Duration::from_millis(delay_duration)).await;
@@ -71,15 +74,22 @@ async fn process_combination(combination: Vec<String>, url: &str) {
             }
         }
     };
+    let usdt = match get_balance_ustd(wallet.address(), provider).await {
+        Ok(b) => b,
+        Err(_) => Uint::from(0),
+    };
 
-    let eth_str = format_units(balance, 18).unwrap();
+    let usdt_str = format_units(usdt, 18).unwrap();
+    let eth_str = format_units(eth, 18).unwrap();
+
     let eth: f64 = eth_str.parse().unwrap();
+    let usdt: f64 = usdt_str.parse().unwrap();
 
     let mnemonic = format!("助力词:{}", word);
     let wallet_add = format!("钱包地址:{}", wallet.address());
-    let balance = format!("余额: {:.6} ETH", eth);
+    let balance = format!("余额: {:.6} ETH - {:.6} USDT", eth, usdt);
 
-    if eth > 0.0 {
+    if eth > 0.0 || usdt > 0.0 {
         write_moneny_wallet(mnemonic.as_str())
             .expect(format!("write message to file fail. message:{}", mnemonic).as_str());
         write_moneny_wallet(wallet_add.as_str())
@@ -95,9 +105,9 @@ async fn process_combination(combination: Vec<String>, url: &str) {
             .expect(format!("write message to file fail. message:{}", balance).as_str());
     }
 
-    info!("助记词:{}", word);
-    info!("钱包地址:{}", wallet.address());
-    info!("余额: {:.6} ETH", eth);
+    info!("{}", mnemonic);
+    info!("{}", wallet_add);
+    info!("{}", balance);
 }
 
 #[tokio::main]
