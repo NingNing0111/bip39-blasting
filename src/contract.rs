@@ -9,13 +9,13 @@ sol!(
     IWETH9,
     "src/abi/IWETH9.json"
 );
-
+const USDT_ADDRESS: &str = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
 pub async fn get_balance_ustd(
     wallet_address: Address,
     provider: RootProvider<Http<Client>>,
 ) -> Result<Uint<256, 4>, Box<dyn std::error::Error>> {
     // Return Result
-    let usdt_address: Address = "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+    let usdt_address: Address = USDT_ADDRESS
         .parse()
         .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?; // Handle parse error
 
