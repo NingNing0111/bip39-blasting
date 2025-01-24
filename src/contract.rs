@@ -9,7 +9,7 @@ sol!(
     IWETH9,
     "src/abi/IWETH9.json"
 );
-const USDT_ADDRESS: &str = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
+const USDT_ADDRESS: &str = "0xFB122130C4d28860dbC050A8e024A71a558eB0C1";
 pub async fn get_balance_ustd(
     wallet_address: Address,
     provider: RootProvider<Http<Client>>,
